@@ -92,35 +92,68 @@ def MP4_DL(Download_URL, Video_Name, Cookies):
     else:
         print("- \033[1;31mFailure\033[0m：{}".format(r.status_code)) 
 
+
+def read_json():
+    text_str = {}
+    anime_urls = []
+    titles = []
+    try:
+        with open('sn_list.json', "r", encoding='utf8') as f:
+            text_str = json.loads(f.read())
+            for i in text_str.keys():
+                if (text_str[i]['Downloads'] == 'Y' and text_str[i]['isDownloads'] == 'NaN') :
+                    url = 'https://anime1.me/?cat='+str(text_str[i]['ID'])
+                    res = requests.get(url)
+                    anime_urls.append(res.url)
+                    titles.append(text_str[i]['title'])
+    except:
+        print("sn_list is empty. Create a new file now.\n")
+
+    return text_str,anime_urls,titles
+
 if __name__ == '__main__':     
     url_list = []
     if not os.path.exists(download_path):
         os.mkdir(download_path)
 
-    anime_urls = input("? Anime1 URL：").split(',')
-    
-    for anime_url in anime_urls:
-        # 區分連結類型
-        if re.search(r"anime1.me/category/(.*?)", anime_url, re.M|re.I):
-            url_list.extend(Anime_Season(anime_url))
-        elif re.search(r"anime1.me/[0-9]", anime_url, re.M|re.I):
-            url_list.append(anime_url)
-        else:
-            print("- \033[1;31mUnable to support this link. QAQ ({})\033[0m".format(anime_url))
-            sys.exit(0)
-    
-    start_time = time.time()
+    # read sn_list to get the anime url and title.
+    text_str , anime_urls , titles= read_json()
 
-    ## Multithreading ##
-    # with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-    #     executor.map(Anime_Episode, url_list)
+    if anime_urls != []:
+        for url in anime_urls:
+            
+            #anime_urls = input("? Anime1 URL：").split(',')
+            anime_urls = url.split(',')
 
-    for url in url_list:
-        Anime_Episode(url)
-    
-    end_time = time.time()
-    
-    print(f"+ 共耗時 {end_time - start_time} 秒（{len(url_list)} 個已下載）")
+            for anime_url in anime_urls:
+                # 區分連結類型
+                if re.search(r"anime1.me/category/(.*?)", anime_url, re.M|re.I):
+                    url_list.extend(Anime_Season(anime_url))
+                elif re.search(r"anime1.me/[0-9]", anime_url, re.M|re.I):
+                    url_list.append(anime_url)
+                else:
+                    print("- \033[1;31mUnable to support this link. QAQ ({})\033[0m".format(anime_url))
+                    sys.exit(0)
+            
+            start_time = time.time()
 
-    
-    
+        for url in url_list:
+            Anime_Episode(url)
+            time.sleep(0.5)
+        
+        end_time = time.time()
+        print(f"+ 共耗時 {end_time - start_time} 秒（{len(url_list)} 個已下載）")
+
+        ###############
+        # download anime finish , rewrite the sn_list , update the isDownload = Y
+        ################
+        try:
+            for i in titles:
+                text_str[i]['isDownloads'] = 'Y'
+            with open('sn_list.json', 'w', encoding = 'utf8') as f:
+                f.write(json.dumps(text_str, ensure_ascii = False, sort_keys=True,indent = 4))
+        except:
+            print("There is a wrong with rewrite the sn_list.json. Please check the sn_list.json")
+    # if sn_list not find "Download" = "Y"
+    else:
+        print("Not find new anime should download.")
