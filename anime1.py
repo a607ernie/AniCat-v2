@@ -60,6 +60,7 @@ def Anime_Episode(url):
     cookie_p = re.search(r"p=(.*?);", set_cookie, re.M|re.I).group(1)
     cookie_h = re.search(r"HttpOnly, h=(.*?);", set_cookie, re.M|re.I).group(1)
     cookies = 'e={};p={};h={};'.format(cookie_e, cookie_p, cookie_h)
+    #print(title)
     MP4_DL(url, title, cookies)
 
 def MP4_DL(Download_URL, Video_Name, Cookies):
@@ -102,10 +103,18 @@ def read_json():
             text_str = json.loads(f.read())
             for i in text_str.keys():
                 if (text_str[i]['Downloads'] == 'Y' and text_str[i]['isDownloads'] == 'NaN') :
-                    url = 'https://anime1.me/?cat='+str(text_str[i]['ID'])
-                    res = requests.get(url)
-                    anime_urls.append(res.url)
+                    # check ID = #num
+                    try:
+                        if int(text_str[i]['ID']) >= 0:
+                            url = 'https://anime1.me/?cat='+str(text_str[i]['ID'])
+                            res = requests.get(url)
+                            anime_urls.append(res.url)
+                    # add anime info in sn_list, e.g. ID="http://xxxx......"
+                    except:
+                        anime_urls.append(str(text_str[i]['ID']))
                     titles.append(text_str[i]['title'])
+                    
+
     except:
         print("sn_list is empty. Create a new file now.\n")
 
