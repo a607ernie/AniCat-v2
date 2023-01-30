@@ -80,6 +80,11 @@ def MP4_DL(Download_URL, Video_Name, Cookies):
     # 影片大小
     content_length = int(r.headers['content-length']) 
 
+    # if name have other symbol, replace it.
+    # like '超異域公主連結 Re:Dive'
+    if ':' in Video_Name:
+        Video_Name = Video_Name.replace(':','_')
+
     if(r.status_code == 200):
         print('+ \033[1;34m{}\033[0m [{size:.2f} MB]'.format(Video_Name, size = content_length / 1024 / 1024))
         # Progress Bar
